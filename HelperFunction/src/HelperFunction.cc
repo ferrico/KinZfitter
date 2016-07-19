@@ -53,7 +53,7 @@ HelperFunction::HelperFunction()
 
         // ICHEP 2016 13 TeV
         TString fel_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e.root" ).fullPath());
-        TString fmu_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2mu.root" ).fullPath());
+        TString fmu_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2muLUT_m2mu.root" ).fullPath());
         TString fel_s_data = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DoubleLepton_m2eLUT_m2e.root" ).fullPath());
         TString fmu_s_data = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DoubleLepton_m2muLUT_m2mu.root" ).fullPath());
 
