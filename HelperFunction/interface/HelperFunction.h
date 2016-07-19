@@ -124,8 +124,10 @@ class HelperFunction
 
       int debug_;
 
-      boost::shared_ptr<TFile>     fmu;
-      boost::shared_ptr<TFile>     fel;
+      boost::shared_ptr<TFile>     fmu_mc;
+      boost::shared_ptr<TFile>     fmu_data;
+      boost::shared_ptr<TFile>     fel_mc;
+      boost::shared_ptr<TFile>     fel_data;
       boost::shared_ptr<TH2F>      muon_corr_data;
       boost::shared_ptr<TH2F>      muon_corr_mc;
       boost::shared_ptr<TH2F>      electron_corr_data;

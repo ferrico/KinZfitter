@@ -37,20 +37,36 @@ HelperFunction::HelperFunction()
         //declarations
         debug_ = 0;
 
-/*
+        /* Legacy 7+8 TeV
         TString fmu_s = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
         TString fel_s = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
 
-        fmu = boost::shared_ptr<TFile>( new TFile(fmu_s));
         fel = boost::shared_ptr<TFile>( new TFile(fel_s));
-                
+        fmu = boost::shared_ptr<TFile>( new TFile(fmu_s));
+
         muon_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_reco53x" )->Clone() )) );
         muon_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_mc53x" )->Clone() )) );
                 
         electron_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel->Get( "el_reco53x" )->Clone() )) );
         electron_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel->Get( "el_mc53x" )->Clone() )) );
-*/
+        */
 
+        // ICHEP 2016 13 TeV
+        TString fel_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e.root" ).fullPath());
+        TString fmu_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2mu.root" ).fullPath());
+        TString fel_s_data = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DoubleLepton_m2eLUT_m2e.root" ).fullPath());
+        TString fmu_s_data = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DoubleLepton_m2muLUT_m2mu.root" ).fullPath());
+
+        fel_mc = boost::shared_ptr<TFile>( new TFile(fel_s_mc));
+        fmu_mc = boost::shared_ptr<TFile>( new TFile(fmu_s_mc));
+        fel_data = boost::shared_ptr<TFile>( new TFile(fel_s_data));
+        fmu_data = boost::shared_ptr<TFile>( new TFile(fmu_s_data));
+                
+        muon_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu_data->Get( "2mu" )->Clone() )) );
+        muon_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu_mc->Get( "2mu" )->Clone() )) );
+                
+        electron_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel_data->Get( "2e" )->Clone() )) );
+        electron_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel_mc->Get( "2e" )->Clone() )) );
 }
 
 // HelperFunction::HelperFunction(const HelperFunction& rhs)
@@ -156,6 +172,15 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
   if ((gsf = dynamic_cast<reco::GsfElectron *> (&(*c)) ) != 0)
   {
     pterrLep=pterr(gsf, isData);
+
+    if (gsf->pt()>10.0 && gsf->pt()<200.0 && abs(gsf->eta())<2.5) {                                                                  
+        int xbin = electron_corr_data->FindBin(gsf->pt());                                                                                   
+        int ybin = electron_corr_data->FindBin(abs(gsf->eta()));                                                                           
+        if (isData) pterrLep*=electron_corr_data->GetBinContent(xbin,ybin);                                                                      
+        else pterrLep*=electron_corr_mc->GetBinContent(xbin,ybin);
+        if(debug_) cout<<"corrected electron pt err is "<<pterrLep<<endl;
+    }
+
   }
   else if ((mu = dynamic_cast<reco::Muon *> (&(*c)) ) != 0)
   {
@@ -171,12 +196,20 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
      }
  
     }
+
+    if (mu->pt()>10.0 && mu->pt()<100.0 && abs(mu->eta())<2.4) {                                                                  
+        int xbin = muon_corr_data->FindBin(mu->pt());                                                                                   
+        int ybin = muon_corr_data->FindBin(abs(mu->eta()));                                                                           
+        if (isData) pterrLep*=muon_corr_data->GetBinContent(xbin,ybin);                                                                      
+        else pterrLep*=muon_corr_mc->GetBinContent(xbin,ybin);
+        if(debug_) cout<<"corrected muon pt err is "<<pterrLep<<endl;
+    }
+
   }
   else if ((pf = dynamic_cast<reco::PFCandidate *> (&(*c)) ) != 0)
   { 
     pterrLep=pterr(c, isData);
   }
-
 
   return pterrLep;
 
