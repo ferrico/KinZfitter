@@ -173,12 +173,22 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
   {
     pterrLep=pterr(gsf, isData);
 
-    if (gsf->pt()>10.0 && gsf->pt()<200.0 && abs(gsf->eta())<2.5) {                                                                  
-        int xbin = electron_corr_data->FindBin(gsf->pt());                                                                                   
-        int ybin = electron_corr_data->FindBin(abs(gsf->eta()));                                                                           
-        if (isData) pterrLep*=electron_corr_data->GetBinContent(xbin,ybin);                                                                      
-        else pterrLep*=electron_corr_mc->GetBinContent(xbin,ybin);
-        if(debug_) cout<<"corrected electron pt err is "<<pterrLep<<endl;
+    if (gsf->pt()>10.0 && gsf->pt()<100.0 && abs(gsf->eta())<2.5) {         
+        float pt=(float)gsf->pt(); float eta=(float)abs(gsf->eta());
+        if (isData) {
+            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
+            int xbin = electron_corr_data->GetXaxis()->FindBin(pt);              
+            int ybin = electron_corr_data->GetYaxis()->FindBin(eta); 
+            pterrLep*=electron_corr_data->GetBinContent(xbin,ybin);                                                                      
+        }
+        else {
+            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
+            int xbin = electron_corr_mc->GetXaxis()->FindBin(pt);              
+            int ybin = electron_corr_mc->GetYaxis()->FindBin(eta); 
+            pterrLep*=electron_corr_mc->GetBinContent(xbin,ybin);
+            if(debug_) cout<<"xbin: "<<xbin<<" ybin: "<<ybin<<" "<<electron_corr_mc->GetBinContent(xbin,ybin);
+            if(debug_) cout<<"corrected electron pt err is "<<pterrLep<<endl;
+        }
     }
 
   }
@@ -198,11 +208,21 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
     }
 
     if (mu->pt()>10.0 && mu->pt()<100.0 && abs(mu->eta())<2.4) {                                                                  
-        int xbin = muon_corr_data->FindBin(mu->pt());                                                                                   
-        int ybin = muon_corr_data->FindBin(abs(mu->eta()));                                                                           
-        if (isData) pterrLep*=muon_corr_data->GetBinContent(xbin,ybin);                                                                      
-        else pterrLep*=muon_corr_mc->GetBinContent(xbin,ybin);
-        if(debug_) cout<<"corrected muon pt err is "<<pterrLep<<endl;
+        float pt=(float)mu->pt(); float eta=(float)abs(mu->eta());
+        if (isData) {
+            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
+            int xbin = muon_corr_data->GetXaxis()->FindBin(pt);              
+            int ybin = muon_corr_data->GetYaxis()->FindBin(eta); 
+            pterrLep*=muon_corr_data->GetBinContent(xbin,ybin);                                                                      
+        }
+        else {
+            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
+            int xbin = muon_corr_mc->GetXaxis()->FindBin(pt);              
+            int ybin = muon_corr_mc->GetYaxis()->FindBin(eta); 
+            pterrLep*=muon_corr_mc->GetBinContent(xbin,ybin);
+            if(debug_) cout<<"xbin: "<<xbin<<" ybin: "<<ybin<<" "<<muon_corr_mc->GetBinContent(xbin,ybin);
+            if(debug_) cout<<"corrected muon pt err is "<<pterrLep<<endl;
+        }
     }
 
   }
