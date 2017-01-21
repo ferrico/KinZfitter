@@ -879,12 +879,12 @@ void KinZfitter::MakeModel(/*RooWorkspace &w,*/ KinZfitter::FitInput &input, Kin
     if (mass4lRECO_ > 140) {
 
         //r = PDFRelBW->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1),RooFit::PrintEvalErrors(-1));
-        r = PDFRelBW->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1));
+        r = PDFRelBW->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
 
        } else {
         
         //r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1),RooFit::PrintEvalErrors(-1));
-        r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1));
+        r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
 
               }
     //save fit result
@@ -1257,7 +1257,7 @@ int KinZfitter::PerZ1Likelihood(double & l1, double & l2, double & lph1, double 
     //RooMinuit(*nll).migrad();
 
     //RooFitResult* r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1),RooFit::PrintEvalErrors(-1));
-    RooFitResult* r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1));
+    RooFitResult* r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ1),RooFit::PrintLevel(-1));
     const TMatrixDSym& covMatrix = r->covarianceMatrix();
    
     const RooArgList& finalPars = r->floatParsFinal();
