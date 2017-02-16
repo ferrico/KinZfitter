@@ -91,6 +91,21 @@ void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map
             if(p=="mean" )  { meanVal_ = val;}//  cout<<"mean is  "<<meanVal_<<endl;}
             if(p=="sigma" )  { sigmaVal_ = val;}//  cout<<"sigma is  "<<sigmaVal_<<endl;}
             if(p=="f1")   { f1Val_ = val;}//  cout<<"f1 is  "<<f1Val_<<endl;}
+
+            if(p=="meanCB")   { meanCB_ = val;}
+            if(p=="sigmaCB")   { sigmaCB_ = val;}
+            if(p=="alphaCB")   { alphaCB_ = val;}
+            if(p=="nCB")   { nCB_ = val;}
+            if(p=="meanGauss1")   { meanGauss1_ = val;}
+            if(p=="sigmaGauss1")   { sigmaGauss1_ = val;}
+            if(p=="f1")   { f1_ = val;}
+            if(p=="meanGauss2")   { meanGauss2_ = val;}
+            if(p=="sigmaGauss2")   { sigmaGauss2_ = val;}
+            if(p=="f2")   { f2_ = val;}
+            if(p=="meanGauss3")   { meanGauss3_ = val;}
+            if(p=="sigmaGauss3")   { sigmaGauss3_ = val;}
+            if(p=="f3")   { f3_ = val;}
+
         }
     }
 
@@ -809,56 +824,43 @@ void KinZfitter::MakeModel(/*RooWorkspace &w,*/ KinZfitter::FitInput &input, Kin
     RooFormulaVar p2Dph2("p2Dph2", dotProduct_4d, RooArgList(E2_lep, E2_gamma, p2v3Dph2));  //w.import(p2Dph2);
     RooFormulaVar ph1Dph2("ph1Dph2", dotProduct_4d, RooArgList(E1_gamma, E2_gamma, ph1v3Dph2)); // w.import(ph1Dph2);
 
-    RooRealVar bwMean("bwMean", "m_{Z^{0}}", 91.187); //w.import(bwMean);
-    RooRealVar bwGamma("bwGamma", "#Gamma", 2.5); 
-
-
-     RooProdPdf* PDFRelBW;  
-     RooFormulaVar* mZ;
-     RooGenericPdf* RelBW;
+    RooFormulaVar* mZ;
 
      //mZ
      if (input.nFsr == 1) {
         mZ = new RooFormulaVar("mZ", "TMath::Sqrt(2*@0+2*@1+2*@2+@3*@3+@4*@4)", RooArgList(p1D2, p1Dph1, p2Dph1, m1, m2));
-        RelBW = new RooGenericPdf("RelBW","1/( pow(mZ*mZ-bwMean*bwMean,2)+pow(mZ,4)*pow(bwGamma/bwMean,2) )", RooArgSet(*mZ,bwMean,bwGamma) );
-//        PDFRelBW = new RooProdPdf("PDFRelBW", "PDFRelBW", RooArgList(gauss1_lep, gauss2_lep, gauss1_gamma, *RelBW));
         } 
-
      else if (input.nFsr == 2) {
         mZ = new RooFormulaVar("mZ", "TMath::Sqrt(2*@0+2*@1+2*@2+2*@3+2*@4+2*@5+@6*@6+@7*@7)", RooArgList(p1D2,p1Dph1,p2Dph1,p1Dph2,p2Dph2,ph1Dph2, m1, m2));
-        RelBW = new RooGenericPdf("RelBW","1/( pow(mZ*mZ-bwMean*bwMean,2)+pow(mZ,4)*pow(bwGamma/bwMean,2) )", RooArgSet(*mZ,bwMean,bwGamma) );
-//        PDFRelBW = new RooProdPdf("PDFRelBW", "PDFRelBW", RooArgList(gauss1_lep, gauss2_lep, gauss1_gamma, gauss2_gamma, *RelBW));
         }
      else {
          mZ = new RooFormulaVar("mZ", "TMath::Sqrt(2*@0+@1*@1+@2*@2)", RooArgList(p1D2, m1, m2));
-         RelBW = new RooGenericPdf("RelBW","1/( pow(mZ*mZ-bwMean*bwMean,2)+pow(mZ,4)*pow(bwGamma/bwMean,2) )", RooArgSet(*mZ,bwMean,bwGamma) );
      }
 
-     PDFRelBW = new RooProdPdf("PDFRelBW", "PDFRelBW", RooArgList(gauss1_lep, gauss2_lep, *RelBW));     
-
      //true shape
-     RooRealVar sg("sg", "sg", sgVal_);
-     RooRealVar a("a", "a", aVal_);
-     RooRealVar n("n", "n", nVal_);
+     RooRealVar meanCB("meanCB","",meanCB_);
+     RooRealVar sigmaCB("sigmaCB","",sigmaCB_);
+     RooRealVar alphaCB("alphaCB","",alphaCB_);
+     RooRealVar nCB("nCB","",nCB_);
+     RooRealVar meanGauss1("meanGauss1","",meanGauss1_);
+     RooRealVar sigmaGauss1("sigmaGauss1","",sigmaGauss1_);
+     RooRealVar f1("f1","",f1_);
+     RooRealVar meanGauss2("meanGauss2","",meanGauss2_);
+     RooRealVar sigmaGauss2("sigmaGauss2","",sigmaGauss2_);
+     RooRealVar f2("f2","",f2_);
+     RooRealVar meanGauss3("meanGauss3","",meanGauss3_);
+     RooRealVar sigmaGauss3("sigmaGauss3","",sigmaGauss3_);
+     RooRealVar f3("f3","",f3_);
 
-     RooCBShape CB("CB","CB",*mZ,bwMean,sg,a,n);
-     RooRealVar f("f","f", fVal_);
+     RooCBShape* singleCB = new RooCBShape("singleCB", "", *mZ, meanCB, sigmaCB, alphaCB, nCB);
+     RooGaussian* gaussShape1 = new RooGaussian("gaussShape1", "", *mZ, meanGauss1, sigmaGauss1);
+     RooAddPdf* CBplusGauss = new RooAddPdf("CBplusGauss", "", *singleCB, *gaussShape1, f1);
+     RooGaussian* gaussShape2 = new RooGaussian("gaussShape2", "", *mZ, meanGauss2, sigmaGauss2);
+     RooAddPdf* CBplusGaussplusGauss = new RooAddPdf("CBplusGaussplusGauss", "", *CBplusGauss, *gaussShape2, f2);
+     RooGaussian* gaussShape3 = new RooGaussian("gaussShape3", "", *mZ, meanGauss3, sigmaGauss3);
+     RooAddPdf* CBplusGaussplusGaussplusGauss = new RooAddPdf("CBplusGaussplusGaussplusGauss", "", *CBplusGaussplusGauss, *gaussShape3, f3);
 
-     RooRealVar mean("mean","mean",meanVal_);
-     RooRealVar sigma("sigma","sigma",sigmaVal_);
-     RooRealVar f1("f1","f1",f1Val_);
-
-     RooAddPdf *RelBWxCB;
-     RelBWxCB = new RooAddPdf("RelBWxCB","RelBWxCB", *RelBW, CB, f);
-     RooGaussian *gauss;
-     gauss = new RooGaussian("gauss","gauss",*mZ,mean,sigma);
-     RooAddPdf *RelBWxCBxgauss;
-     RelBWxCBxgauss = new RooAddPdf("RelBWxCBxgauss","RelBWxCBxgauss", *RelBWxCB, *gauss, f1);
-
-     RooProdPdf *PDFRelBWxCBxgauss;
-     PDFRelBWxCBxgauss = new RooProdPdf("PDFRelBWxCBxgauss","PDFRelBWxCBxgauss", 
-                                     RooArgList(gauss1_lep, gauss2_lep, *RelBWxCBxgauss) );
-
+     RooProdPdf *model = new RooProdPdf("model","",RooArgList(gauss1_lep, gauss2_lep,*CBplusGaussplusGaussplusGauss));
 
     //make fit
     RooArgSet *rastmp;
@@ -879,12 +881,12 @@ void KinZfitter::MakeModel(/*RooWorkspace &w,*/ KinZfitter::FitInput &input, Kin
     if (mass4lRECO_ > 140) {
 
         //r = PDFRelBW->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1),RooFit::PrintEvalErrors(-1));
-        r = PDFRelBW->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
+        r = model->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
 
        } else {
         
         //r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::PrintLevel(-1),RooFit::PrintEvalErrors(-1));
-        r = PDFRelBWxCBxgauss->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
+        r = model->fitTo(*pTs,RooFit::Save(),RooFit::Constrain(*mZ),RooFit::PrintLevel(-1));
 
               }
     //save fit result
@@ -926,13 +928,16 @@ void KinZfitter::MakeModel(/*RooWorkspace &w,*/ KinZfitter::FitInput &input, Kin
       delete r;
     delete rastmp;
     delete pTs;
-    delete PDFRelBW;
     delete mZ;
-    delete RelBW;
-    delete RelBWxCB;
-    delete gauss;
-    delete RelBWxCBxgauss;
-    delete PDFRelBWxCBxgauss;
+    delete singleCB;
+    delete gaussShape1;
+    delete CBplusGauss;
+    delete gaussShape2;
+    delete CBplusGaussplusGauss;
+    delete gaussShape3;
+    delete CBplusGaussplusGaussplusGauss;
+    delete model;
+
 }
 
 bool KinZfitter::IsFourEFourMu(vector<int> &Z1id, vector<int> &Z2id) {

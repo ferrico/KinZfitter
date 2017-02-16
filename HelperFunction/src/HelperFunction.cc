@@ -52,6 +52,7 @@ HelperFunction::HelperFunction()
         */
 
         // ICHEP 2016 13 TeV
+        /*
         TString fel_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e.root" ).fullPath());
         TString fmu_s_mc = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2muLUT_m2mu.root" ).fullPath());
         TString fel_s_data = TString(edm::FileInPath ( "KinZfitter/HelperFunction/hists/DoubleLepton_m2eLUT_m2e.root" ).fullPath());
@@ -67,6 +68,38 @@ HelperFunction::HelperFunction()
                 
         electron_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel_data->Get( "2e" )->Clone() )) );
         electron_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel_mc->Get( "2e" )->Clone() )) );
+        */
+
+        // MORIOND 17
+        TString s_corr_e_1 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_1.root" ).fullPath());
+        TString s_corr_e_2 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_2.root" ).fullPath());
+        TString s_corr_e_3 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_3.root" ).fullPath());
+
+        TString s_corr_mu = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2muLUT_m2mu.root" ).fullPath());
+
+        f_corr_e_1 = boost::shared_ptr<TFile>( new TFile(s_corr_e_1)); 
+        f_corr_e_2 = boost::shared_ptr<TFile>( new TFile(s_corr_e_2)); 
+        f_corr_e_3 = boost::shared_ptr<TFile>( new TFile(s_corr_e_3)); 
+        f_corr_mu = boost::shared_ptr<TFile>( new TFile(s_corr_mu));
+        
+        el_corr_1 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_1->Get("2e")->Clone() )) );
+        el_corr_2 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_2->Get("2e")->Clone() )) );
+        el_corr_3 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_3->Get("2e")->Clone() )) );
+
+        mu_corr = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_mu->Get("2mu")->Clone() )) );
+        
+        x_elpTaxis_1 = el_corr_1->GetXaxis(); y_eletaaxis_1 = el_corr_1->GetYaxis();
+        maxPtEl_1 = x_elpTaxis_1->GetXmax(); minPtEl_1 = x_elpTaxis_1->GetXmin();
+
+        x_elpTaxis_2 = el_corr_2->GetXaxis(); y_eletaaxis_2 = el_corr_2->GetYaxis();
+        maxPtEl_2 = x_elpTaxis_2->GetXmax(); minPtEl_2 = x_elpTaxis_2->GetXmin();
+
+        x_elpTaxis_3 = el_corr_3->GetXaxis(); y_eletaaxis_3 = el_corr_3->GetYaxis();
+        maxPtEl_3 = x_elpTaxis_3->GetXmax(); minPtEl_3 = x_elpTaxis_3->GetXmin();
+
+        x_mupTaxis = mu_corr->GetXaxis(); y_muetaaxis = mu_corr->GetYaxis();
+        maxPtMu = x_mupTaxis->GetXmax(); minPtMu = x_mupTaxis->GetXmin();
+
 }
 
 // HelperFunction::HelperFunction(const HelperFunction& rhs)
@@ -171,25 +204,46 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
 
   if ((gsf = dynamic_cast<reco::GsfElectron *> (&(*c)) ) != 0)
   {
+
     pterrLep=pterr(gsf, isData);
 
-    if (gsf->pt()>10.0 && gsf->pt()<100.0 && abs(gsf->eta())<2.5) {         
-        float pt=(float)gsf->pt(); float eta=(float)abs(gsf->eta());
-        if (isData) {
-            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
-            int xbin = electron_corr_data->GetXaxis()->FindBin(pt);              
-            int ybin = electron_corr_data->GetYaxis()->FindBin(eta); 
-            pterrLep*=electron_corr_data->GetBinContent(xbin,ybin);                                                                      
-        }
-        else {
-            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
-            int xbin = electron_corr_mc->GetXaxis()->FindBin(pt);              
-            int ybin = electron_corr_mc->GetYaxis()->FindBin(eta); 
-            pterrLep*=electron_corr_mc->GetBinContent(xbin,ybin);
-            if(debug_) cout<<"xbin: "<<xbin<<" ybin: "<<ybin<<" "<<electron_corr_mc->GetBinContent(xbin,ybin);
-            if(debug_) cout<<"corrected electron pt err is "<<pterrLep<<endl;
+    double pT_e = gsf->pt();
+    double eta_e = gsf->eta();
+    
+    if (gsf->ecalDriven()) {
+
+        if (fabs(eta_e) < 1) {
+            if (pterrLep/pT_e < 0.03) { // hardcode 1
+                int xbin = x_elpTaxis_1->FindBin(pT_e);
+                int ybin = y_eletaaxis_1->FindBin(fabs(eta_e));
+                if(pT_e > minPtEl_1 && pT_e < maxPtEl_1 ){
+                    pterrLep*=el_corr_1->GetBinContent(xbin,ybin);
+                } else {
+                    pterrLep*=1.0;
+                }
+            } else {pterrLep*=1.03;} // hardcode 2        
+        } else if (fabs(eta_e) > 1 && fabs(eta_e) < 2.5) {
+            if (pterrLep/pT_e < 0.07) { // hardcode 3
+                int xbin = x_elpTaxis_2->FindBin(pT_e);
+                int ybin = y_eletaaxis_2->FindBin(fabs(eta_e));
+                if(pT_e > minPtEl_2 && pT_e < maxPtEl_2 ){
+                    pterrLep*=el_corr_2->GetBinContent(xbin,ybin);
+                } else {
+                    pterrLep*=1.0;
+                }
+            } else {pterrLep*=0.74;} // hardcode 4
+        } // 1 < |eta| < 2.5      
+    } else {
+      
+        int xbin = x_elpTaxis_3->FindBin(pT_e);
+        int ybin = y_eletaaxis_3->FindBin(fabs(eta_e));
+        if(pT_e > minPtEl_3 && pT_e < maxPtEl_3 ){
+            pterrLep*=el_corr_3->GetBinContent(xbin,ybin);
+        } else {
+            pterrLep*=1.0;
         }
     }
+    
 
   }
   else if ((mu = dynamic_cast<reco::Muon *> (&(*c)) ) != 0)
@@ -207,22 +261,12 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
  
     }
 
-    if (mu->pt()>10.0 && mu->pt()<100.0 && abs(mu->eta())<2.4) {                                                                  
-        float pt=(float)mu->pt(); float eta=(float)abs(mu->eta());
-        if (isData) {
-            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
-            int xbin = muon_corr_data->GetXaxis()->FindBin(pt);              
-            int ybin = muon_corr_data->GetYaxis()->FindBin(eta); 
-            pterrLep*=muon_corr_data->GetBinContent(xbin,ybin);                                                                      
-        }
-        else {
-            if(debug_) cout<<"pt: "<<pt<<" abs(eta): "<<eta<<endl;
-            int xbin = muon_corr_mc->GetXaxis()->FindBin(pt);              
-            int ybin = muon_corr_mc->GetYaxis()->FindBin(eta); 
-            pterrLep*=muon_corr_mc->GetBinContent(xbin,ybin);
-            if(debug_) cout<<"xbin: "<<xbin<<" ybin: "<<ybin<<" "<<muon_corr_mc->GetBinContent(xbin,ybin);
-            if(debug_) cout<<"corrected muon pt err is "<<pterrLep<<endl;
-        }
+    int xbin = x_mupTaxis->FindBin(mu->pt());
+    int ybin = y_muetaaxis->FindBin(fabs(mu->eta()));
+    if(mu->pt()>minPtMu && mu->pt()<maxPtMu ){
+        pterrLep*=mu_corr->GetBinContent(xbin,ybin);
+    } else {
+        pterrLep*=1.0;
     }
 
   }

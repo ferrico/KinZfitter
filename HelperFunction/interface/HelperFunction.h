@@ -124,14 +124,36 @@ class HelperFunction
 
       int debug_;
 
-      boost::shared_ptr<TFile>     fmu_mc;
-      boost::shared_ptr<TFile>     fmu_data;
-      boost::shared_ptr<TFile>     fel_mc;
-      boost::shared_ptr<TFile>     fel_data;
-      boost::shared_ptr<TH2F>      muon_corr_data;
-      boost::shared_ptr<TH2F>      muon_corr_mc;
-      boost::shared_ptr<TH2F>      electron_corr_data;
-      boost::shared_ptr<TH2F>      electron_corr_mc;
+      boost::shared_ptr<TFile>     f_corr_mu;
+      boost::shared_ptr<TFile>     f_corr_e_1;
+      boost::shared_ptr<TFile>     f_corr_e_2;
+      boost::shared_ptr<TFile>     f_corr_e_3;
+
+      boost::shared_ptr<TH2F>      mu_corr;
+      boost::shared_ptr<TH2F>      el_corr_1;
+      boost::shared_ptr<TH2F>      el_corr_2;
+      boost::shared_ptr<TH2F>      el_corr_3;
+
+      TAxis* x_elpTaxis_1;
+      TAxis* y_eletaaxis_1;
+      double maxPtEl_1;
+      double minPtEl_1;
+
+      TAxis* x_elpTaxis_2;
+      TAxis* y_eletaaxis_2;
+      double maxPtEl_2;
+      double minPtEl_2;
+
+      TAxis* x_elpTaxis_3;
+      TAxis* y_eletaaxis_3;
+      double maxPtEl_3;
+      double minPtEl_3;
+
+      TAxis* x_mupTaxis;
+      TAxis* y_muetaaxis;
+      double maxPtMu;
+      double minPtMu;
+      
 
       // ---------- member data --------------------------------
 
