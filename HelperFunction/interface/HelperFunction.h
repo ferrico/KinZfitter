@@ -88,13 +88,13 @@ class HelperFunction
 {
 
    public:
-      HelperFunction();
+      HelperFunction(int year, bool isData);
       virtual ~HelperFunction();
 
       void setdebug(int d){debug_= d;};
 
       //ForZ
-      double pterr(reco::Candidate *c, bool isData);
+      double pterr(reco::Candidate *c, bool isData, int year);
 
       //double pterr(pat::Electron electron, bool isData);
       //double pterr(pat::Muon muon, bool isData);

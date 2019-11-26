@@ -31,7 +31,7 @@
 //
 // constructors and destructor
 //
-HelperFunction::HelperFunction()
+HelperFunction::HelperFunction(int year, bool isData)
 {
 
         //declarations
@@ -71,11 +71,42 @@ HelperFunction::HelperFunction()
         */
 
         // MORIOND 17
-        TString s_corr_e_1 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_1.root" ).fullPath());
-        TString s_corr_e_2 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_2.root" ).fullPath());
-        TString s_corr_e_3 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2eLUT_m2e_3.root" ).fullPath());
+        //
+        //
+        //  Full Run II
+        //TString s_corr_e_1 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/FullRunII/madgraph/" + (TString)year + "/LUT_m2e_1.root" ).fullPath());
+        //TString s_corr_e_2 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/FullRunII/madgraph/" + (TString)year + "/LUT_m2e_2.root" ).fullPath());
+        //TString s_corr_e_3 = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/FullRunII/madgraph/" + (TString)year + "/LUT_m2e_3.root" ).fullPath());
+        //TString s_corr_mu = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/FullRunII/madgraph/" + (TString)year + "/LUT_m2mu.root" ).fullPath());
 
-        TString s_corr_mu = TString(edm::FileInPath ("KinZfitter/HelperFunction/hists/DYJetsToLL_M-50_m2muLUT_m2mu.root" ).fullPath());
+        TString directory_name;
+        if(!isData)
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/";
+        else
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/Data/";
+        directory_name = Form("%s%d/", directory_name.Data(), year);
+        /*
+        if(year == 2016)
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/2016/";
+        else if(year == 2017)
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/2017/";        
+        else if(year == 2018)
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/2018/";
+        else{
+            std::cout<<" --------------------  WRONG YEAR --------------- "<<std::endl;
+            return;
+        }
+        */
+
+        std::cout<<" ---------------------------------------------------------- "<<std::endl;
+        std::cout<<" ---------------------------------------------------------- "<<std::endl;
+        std::cout<<"ABCDE ---------- LUT directory = "<<directory_name<<std::endl;
+        std::cout<<" ---------------------------------------------------------- "<<std::endl;
+        std::cout<<" ---------------------------------------------------------- "<<std::endl;
+        TString s_corr_e_1 = TString(edm::FileInPath (directory_name + "LUT_2e_1.root").fullPath());
+        TString s_corr_e_2 = TString(edm::FileInPath (directory_name + "LUT_2e_2.root").fullPath());
+        TString s_corr_e_3 = TString(edm::FileInPath (directory_name + "LUT_2e_3.root").fullPath());
+        TString s_corr_mu = TString(edm::FileInPath (directory_name + "LUT_2mu.root" ).fullPath());
 
         f_corr_e_1 = boost::shared_ptr<TFile>( new TFile(s_corr_e_1)); 
         f_corr_e_2 = boost::shared_ptr<TFile>( new TFile(s_corr_e_2)); 
@@ -193,7 +224,7 @@ double HelperFunction::masserror( std::vector<TLorentzVector> Lep, std::vector<d
 }
 
 
-double HelperFunction::pterr( reco::Candidate *c, bool isData){
+double HelperFunction::pterr( reco::Candidate *c, bool isData, int year){
 
   reco::GsfElectron *gsf; reco::Muon *mu;
   reco::PFCandidate *pf;
@@ -221,7 +252,18 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
                 } else {
                     pterrLep*=1.0;
                 }
-            } else {pterrLep*=1.03;} // hardcode 2        
+            } else {
+                if(year==2016)
+                    pterrLep*=1.007;
+                else if(year==2017)
+                    pterrLep*=1.004;
+                else if(year==2018)
+                    pterrLep*=1.003;
+                else{
+                   std::cout<<" --------------------  WRONG YEAR --------------- "<<std::endl; 
+                   return -1;
+                } 
+            } // hardcode 2        
         } else if (fabs(eta_e) > 1 && fabs(eta_e) < 2.5) {
             if (pterrLep/pT_e < 0.07) { // hardcode 3
                 int xbin = x_elpTaxis_2->FindBin(pT_e);
@@ -231,7 +273,18 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
                 } else {
                     pterrLep*=1.0;
                 }
-            } else {pterrLep*=0.74;} // hardcode 4
+            } else{
+                if(year==2016)                                                                                                                  
+                    pterrLep*=1.004;                                                                                                            
+                else if(year==2017)                                                                                                             
+                    pterrLep*=1.001;                                                                                                            
+                else if(year==2018)                                                                                                             
+                    pterrLep*=1.007;                                                                                                            
+                else{                                                                                                                           
+                    std::cout<<" --------------------  WRONG YEAR --------------- "<<std::endl; 
+                    return -1;
+                }  
+            } // hardcode 4
         } // 1 < |eta| < 2.5      
     } else {
       
@@ -272,7 +325,7 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData){
   }
   else if ((pf = dynamic_cast<reco::PFCandidate *> (&(*c)) ) != 0)
   { 
-    pterrLep=pterr(c, isData);
+    pterrLep=pterr(c, isData, year);
   }
 
   return pterrLep;

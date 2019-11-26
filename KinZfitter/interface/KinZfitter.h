@@ -56,12 +56,12 @@ using namespace std;
 class KinZfitter {
 public:
 	
-        KinZfitter(bool isData);
+        KinZfitter(bool isData, int year);
         ~KinZfitter();
 
 	/// Kinematic fit of lepton momenta
         /// HelperFunction class to calcluate per lepton(+photon) pT error
-        void Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons);
+        void Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year);
 
         ///
         void KinRefitZ();
@@ -148,7 +148,7 @@ private:
         /// HelperFunction class to calcluate per lepton(+photon) pT error
         HelperFunction * helperFunc_;
 
-        void initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhoton);
+        void initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhoton, int year);
      
         void SetFitInput(FitInput &input,
                          vector<TLorentzVector> ZLep, vector<double> ZLepErr,

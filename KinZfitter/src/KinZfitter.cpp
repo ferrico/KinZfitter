@@ -17,7 +17,7 @@
 /// KinZfitter::KinZfitter - constructor/
 ///----------------------------------------------------------------------------------------------
 
-KinZfitter::KinZfitter(bool isData)
+KinZfitter::KinZfitter(bool isData, int year)
 {    
 
      PDFName_ = "GluGluHToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8";
@@ -27,7 +27,7 @@ KinZfitter::KinZfitter(bool isData)
      if(debug_) std::cout << "KinZfitter. The debug flag is ON with "<<PDFName_<< std::endl;
 	
      /// Initialise HelperFunction
-     helperFunc_ = new HelperFunction();
+     helperFunc_ = new HelperFunction(year, isData);
      isCorrPTerr_ = true; 
      isData_ = isData; 
 
@@ -38,7 +38,7 @@ KinZfitter::~KinZfitter()
     delete helperFunc_;
 }
 
-void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons){
+void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
 
     // reset everything for each event
     idsZ1_.clear(); idsZ2_.clear();      
@@ -50,7 +50,7 @@ void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map
     pTerrsZ1_.clear(); pTerrsZ2_.clear(); pTerrsZ1ph_.clear(); pTerrsZ2ph_.clear();
     pTerrsZ1REFIT_.clear(); pTerrsZ2REFIT_.clear(); pTerrsZ1phREFIT_.clear(); pTerrsZ2phREFIT_.clear();
 
-    initZs(selectedLeptons, selectedFsrPhotons);
+    initZs(selectedLeptons, selectedFsrPhotons, year);
 
     if(debug_) cout<<"list ids"<<endl;
     if(debug_) cout<<"IDs[0] "<<idsZ1_[0]<<" IDs[1] "<<idsZ1_[1]<<" IDs[2] "<<idsZ2_[0]<<" IDs[3] "<<idsZ2_[1]<<endl;
@@ -116,7 +116,7 @@ void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map
 ///----------------------------------------------------------------------------------------------
 ///----------------------------------------------------------------------------------------------
 
-void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons){
+void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
 
     if(debug_) cout<<"init leptons"<<endl;
 
@@ -125,7 +125,7 @@ void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::ma
         double pTerr = 0; TLorentzVector p4;
 
         reco::Candidate * c = selectedLeptons[il];              
-        pTerr = helperFunc_->pterr(c ,  isData_);
+        pTerr = helperFunc_->pterr(c ,  isData_, year);
         p4.SetPxPyPzE(c->px(),c->py(),c->pz(),c->energy());  
         int pdgId = c->pdgId();
 
