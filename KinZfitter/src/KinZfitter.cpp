@@ -40,7 +40,8 @@ KinZfitter::~KinZfitter()
 
 void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
 
-    // reset everything for each event
+    // reset everything for each event    
+    
     idsZ1_.clear(); idsZ2_.clear();      
     idsFsrZ1_.clear(); idsFsrZ2_.clear();
 
@@ -111,13 +112,85 @@ void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map
 
 }
 
+/// SETUP FOR USING LEPTON REFITTED
+void KinZfitter::Setup(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
+    // reset everything for each event
+    idsZ1_.clear(); idsZ2_.clear();      
+    idsFsrZ1_.clear(); idsFsrZ2_.clear();
+
+    p4sZ1_.clear(); p4sZ2_.clear(); p4sZ1ph_.clear(); p4sZ2ph_.clear();
+    p4sZ1REFIT_.clear(); p4sZ2REFIT_.clear(); p4sZ1phREFIT_.clear(); p4sZ2phREFIT_.clear();
+     
+    pTerrsZ1_.clear(); pTerrsZ2_.clear(); pTerrsZ1ph_.clear(); pTerrsZ2ph_.clear();
+    pTerrsZ1REFIT_.clear(); pTerrsZ2REFIT_.clear(); pTerrsZ1phREFIT_.clear(); pTerrsZ2phREFIT_.clear();
+
+    initZs(VtxLep, selectedLeptons, selectedFsrPhotons, year);
+    
+    if(debug_) cout<<"list ids"<<endl;
+    if(debug_) cout<<"IDs[0] "<<idsZ1_[0]<<" IDs[1] "<<idsZ1_[1]<<" IDs[2] "<<idsZ2_[0]<<" IDs[3] "<<idsZ2_[1]<<endl;
+
+    fs_=""; 
+    if(abs(idsZ1_[0])==11 && abs(idsZ2_[0])==11) fs_="4e";
+    if(abs(idsZ1_[0])==13 && abs(idsZ2_[0])==13) fs_="4mu";   
+    if(abs(idsZ1_[0])==11 && abs(idsZ2_[0])==13) fs_="2e2mu";
+    if(abs(idsZ1_[0])==13 && abs(idsZ2_[0])==11) fs_="2mu2e";
+
+    if(debug_) cout<<"fs is "<<fs_<<endl;
+
+    /////////////
+    edm::FileInPath pdfFileWithFullPath("KinZfitter/KinZfitter/ParamZ1/dummy.txt");     
+    string paramZ1_dummy = pdfFileWithFullPath.fullPath(); 
+    
+    TString paramZ1 = TString( paramZ1_dummy.substr(0,paramZ1_dummy.length() - 9));
+
+    paramZ1+=PDFName_;
+    paramZ1+="_";
+    paramZ1+=+fs_;
+    paramZ1+=".txt";
+
+    if(debug_) cout<<"paramZ1 in "<<paramZ1<<endl;
+
+    std::ifstream input(paramZ1);
+    std::string line;
+    while (!input.eof() && std::getline(input,line))
+    {
+        std::istringstream iss(line);
+        string p; double val;
+        if(iss >> p >> val) {
+            if(p=="sg")  { sgVal_ = val;}// cout<<"sg is "<<sgVal_<<endl;}
+            if(p=="a" )  { aVal_ = val;}//  cout<<"a is  "<<aVal_<<endl;}
+            if(p=="n" )  { nVal_ = val;}//  cout<<"n is  "<<nVal_<<endl;}
+            if(p=="f")   { fVal_ = val;}//  cout<<"f is  "<<fVal_<<endl;}
+
+            if(p=="mean" )  { meanVal_ = val;}//  cout<<"mean is  "<<meanVal_<<endl;}
+            if(p=="sigma" )  { sigmaVal_ = val;}//  cout<<"sigma is  "<<sigmaVal_<<endl;}
+            if(p=="f1")   { f1Val_ = val;}//  cout<<"f1 is  "<<f1Val_<<endl;}
+
+            if(p=="meanCB")   { meanCB_ = val;}
+            if(p=="sigmaCB")   { sigmaCB_ = val;}
+            if(p=="alphaCB")   { alphaCB_ = val;}
+            if(p=="nCB")   { nCB_ = val;}
+            if(p=="meanGauss1")   { meanGauss1_ = val;}
+            if(p=="sigmaGauss1")   { sigmaGauss1_ = val;}
+            if(p=="f1")   { f1_ = val;}
+            if(p=="meanGauss2")   { meanGauss2_ = val;}
+            if(p=="sigmaGauss2")   { sigmaGauss2_ = val;}
+            if(p=="f2")   { f2_ = val;}
+            if(p=="meanGauss3")   { meanGauss3_ = val;}
+            if(p=="sigmaGauss3")   { sigmaGauss3_ = val;}
+            if(p=="f3")   { f3_ = val;}
+
+        }
+    }
+    
+}
 
 
 ///----------------------------------------------------------------------------------------------
 ///----------------------------------------------------------------------------------------------
 
 void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
-
+    
     if(debug_) cout<<"init leptons"<<endl;
 
     for(unsigned int il = 0; il<selectedLeptons.size(); il++)
@@ -183,6 +256,80 @@ void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::ma
 
     if(debug_) cout<<"p4sZ1ph_ "<<p4sZ1ph_.size()<<" p4sZ2ph_ "<<p4sZ2ph_.size()<<endl;
   
+}
+
+/// initZs FOR USING LEPTON REFITTED
+void KinZfitter::initZs(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
+    
+    if(debug_) cout<<"init leptons"<<endl;
+    
+    if(selectedLeptons.size() != VtxLep.size()) std::cout<<" ----------- LEPTON REFITTED DIFFERENT FROM SELECTED ONES"<<std::endl;
+
+    for(unsigned int il = 0; il<selectedLeptons.size(); il++)
+    {
+        double pTerr = 0; 
+//         TLorentzVector p4;
+
+        reco::Candidate * c = selectedLeptons[il];              
+        pTerr = helperFunc_->pterr(c ,  isData_, year);
+//         p4.SetPxPyPzE(c->px(),c->py(),c->pz(),c->energy());  
+        int pdgId = c->pdgId();
+
+        if(debug_) cout<<"pdg id "<<pdgId<<endl;
+        if(il<2){
+            idsZ1_.push_back(pdgId);
+            pTerrsZ1_.push_back(pTerr);
+//             p4sZ1_.push_back(p4);            
+            p4sZ1_.push_back(VtxLep.at(il));
+        }
+        else{
+
+            idsZ2_.push_back(pdgId);
+            pTerrsZ2_.push_back(pTerr);
+//             p4sZ2_.push_back(p4);            
+            p4sZ2_.push_back(VtxLep.at(il));
+        }
+
+    }
+    
+    if(debug_) cout<<"init fsr photons"<<endl;
+    
+    for(unsigned int ifsr = 0; ifsr<4; ifsr++)
+    {
+
+        TLorentzVector p4 = selectedFsrPhotons[ifsr];
+        if(selectedFsrPhotons[ifsr].Pt()==0) continue;
+
+        if(debug_) cout<<"ifsr "<<ifsr<<endl;
+
+        double pTerr = 0;
+
+        pTerr = helperFunc_->pterr(p4); //,isData_);
+
+        if(debug_) cout<<" pt err is "<<pTerr<<endl;
+
+        if(ifsr<2){
+
+            if(debug_) cout<<"for fsr Z1 photon"<<endl;
+
+            pTerrsZ1ph_.push_back(pTerr);
+            p4sZ1ph_.push_back(p4);
+            idsFsrZ1_.push_back(idsZ1_[ifsr]);
+        }
+        else{
+
+            if(debug_) cout<<"for fsr Z2 photon"<<endl;
+
+            pTerrsZ2ph_.push_back(pTerr);
+            p4sZ2ph_.push_back(p4);
+            idsFsrZ2_.push_back(idsZ2_[ifsr-2]);
+
+        }
+
+    }
+
+    if(debug_) cout<<"p4sZ1ph_ "<<p4sZ1ph_.size()<<" p4sZ2ph_ "<<p4sZ2ph_.size()<<endl;
+
 }
 
 void KinZfitter::SetZResult(double l1, double l2, double lph1, double lph2, 

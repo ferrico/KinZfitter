@@ -62,6 +62,7 @@ public:
 	/// Kinematic fit of lepton momenta
         /// HelperFunction class to calcluate per lepton(+photon) pT error
         void Setup(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year);
+        void Setup(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year);
 
         ///
         void KinRefitZ();
@@ -149,6 +150,7 @@ private:
         HelperFunction * helperFunc_;
 
         void initZs(std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhoton, int year);
+        void initZs(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhoton, int year);
      
         void SetFitInput(FitInput &input,
                          vector<TLorentzVector> ZLep, vector<double> ZLepErr,
