@@ -95,6 +95,7 @@ class HelperFunction
 
       //ForZ
       double pterr(reco::Candidate *c, bool isData, int year);
+      double pterr(TLorentzVector lepton,  double lep_ptError, reco::Candidate *c, bool isData, int year);
 
       //double pterr(pat::Electron electron, bool isData);
       //double pterr(pat::Muon muon, bool isData);
@@ -134,10 +135,10 @@ class HelperFunction
       boost::shared_ptr<TH2F>      el_corr_2;
       boost::shared_ptr<TH2F>      el_corr_3;
 
-      TAxis* x_elpTaxis_1;
-      TAxis* y_eletaaxis_1;
-      double maxPtEl_1;
-      double minPtEl_1;
+      TAxis* x_eletaaxis_1;
+      TAxis* y_elpTErrOverpTaxis_1;
+      double maxPtErrOverPtEl_1;
+      double minPtErrOverPtEl_1;
 
       TAxis* x_elpTaxis_2;
       TAxis* y_eletaaxis_2;

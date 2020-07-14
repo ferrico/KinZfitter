@@ -81,7 +81,8 @@ HelperFunction::HelperFunction(int year, bool isData)
 
         TString directory_name;
         if(!isData)
-            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/";
+            directory_name = "KinZfitter/HelperFunction/hists/FullRunII/VX_BS_Production_10_2_18/";
+            //directory_name = "KinZfitter/HelperFunction/hists/FullRunII/Base_Production_10_2_18/";
         else
             directory_name = "KinZfitter/HelperFunction/hists/FullRunII/Data/";
         directory_name = Form("%s%d/", directory_name.Data(), year);
@@ -104,7 +105,7 @@ HelperFunction::HelperFunction(int year, bool isData)
         std::cout<<" ---------------------------------------------------------- "<<std::endl;
         std::cout<<" ---------------------------------------------------------- "<<std::endl;
         TString s_corr_e_1 = TString(edm::FileInPath (directory_name + "LUT_2e_1.root").fullPath());
-        TString s_corr_e_2 = TString(edm::FileInPath (directory_name + "LUT_2e_2.root").fullPath());
+        TString s_corr_e_2 = TString(edm::FileInPath (directory_name + "LUT_2e_1.root").fullPath());
         TString s_corr_e_3 = TString(edm::FileInPath (directory_name + "LUT_2e_3.root").fullPath());
         TString s_corr_mu = TString(edm::FileInPath (directory_name + "LUT_2mu.root" ).fullPath());
 
@@ -113,17 +114,16 @@ HelperFunction::HelperFunction(int year, bool isData)
         f_corr_e_3 = boost::shared_ptr<TFile>( new TFile(s_corr_e_3)); 
         f_corr_mu = boost::shared_ptr<TFile>( new TFile(s_corr_mu));
         
-        el_corr_1 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_1->Get("2e")->Clone() )) );
-        el_corr_2 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_2->Get("2e")->Clone() )) );
-        el_corr_3 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_3->Get("2e")->Clone() )) );
-
+        el_corr_1 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_1->Get("e1")->Clone() )) );
+        el_corr_2 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_2->Get("e1")->Clone() )) );
+        el_corr_3 = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_e_3->Get("e3")->Clone() )) );
         mu_corr = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(f_corr_mu->Get("2mu")->Clone() )) );
         
-        x_elpTaxis_1 = el_corr_1->GetXaxis(); y_eletaaxis_1 = el_corr_1->GetYaxis();
-        maxPtEl_1 = x_elpTaxis_1->GetXmax(); minPtEl_1 = x_elpTaxis_1->GetXmin();
+        x_eletaaxis_1 = el_corr_1->GetXaxis(); y_elpTErrOverpTaxis_1 = el_corr_1->GetYaxis();
+        maxPtErrOverPtEl_1 = y_elpTErrOverpTaxis_1->GetXmax(); minPtErrOverPtEl_1 = y_elpTErrOverpTaxis_1->GetXmin();
 
-        x_elpTaxis_2 = el_corr_2->GetXaxis(); y_eletaaxis_2 = el_corr_2->GetYaxis();
-        maxPtEl_2 = x_elpTaxis_2->GetXmax(); minPtEl_2 = x_elpTaxis_2->GetXmin();
+//         x_elpTaxis_2 = el_corr_2->GetXaxis(); y_eletaaxis_2 = el_corr_2->GetYaxis();
+//         maxPtEl_2 = x_elpTaxis_2->GetXmax(); minPtEl_2 = x_elpTaxis_2->GetXmin();
 
         x_elpTaxis_3 = el_corr_3->GetXaxis(); y_eletaaxis_3 = el_corr_3->GetYaxis();
         maxPtEl_3 = x_elpTaxis_3->GetXmax(); minPtEl_3 = x_elpTaxis_3->GetXmin();
@@ -239,11 +239,25 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData, int year){
     pterrLep=pterr(gsf, isData);
 
     double pT_e = gsf->pt();
+    double pTerrOverPt_e = (float)(pterrLep/pT_e);
     double eta_e = gsf->eta();
     
     if (gsf->ecalDriven()) {
+    	int xbin = x_eletaaxis_1->FindBin(fabs(eta_e));
+    	int ybin = y_elpTErrOverpTaxis_1->FindBin(pTerrOverPt_e);
+//     	std::cout<<gsf->ecalDriven()<<"\t"<<pterrLep;
+    	if(pTerrOverPt_e > minPtErrOverPtEl_1 && pTerrOverPt_e < maxPtErrOverPtEl_1 ){
+//     		std::cout<<"\t"<<pTerrOverPt_e<<"\t"<<fabs(eta_e)<<"\t"<<el_corr_1->GetBinContent(xbin,ybin);
+    		pterrLep*=el_corr_1->GetBinContent(xbin,ybin);
+    		
+	    }
+	    else{
+    		pterrLep*=1.0;
+	    }
+// 	    std::cout<<"\t"<<pterrLep<<std::endl;
 
-        if (fabs(eta_e) < 1) {
+/*        if (fabs(eta_e) < 1) {
+
             if (pterrLep/pT_e < 0.03) { // hardcode 1
                 int xbin = x_elpTaxis_1->FindBin(pT_e);
                 int ybin = y_eletaaxis_1->FindBin(fabs(eta_e));
@@ -285,16 +299,21 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData, int year){
                     return -1;
                 }  
             } // hardcode 4
-        } // 1 < |eta| < 2.5      
-    } else {
-      
+        } // 1 < |eta| < 2.5 
+*/     
+    }
+    else{  
         int xbin = x_elpTaxis_3->FindBin(pT_e);
         int ybin = y_eletaaxis_3->FindBin(fabs(eta_e));
+//     	std::cout<<gsf->ecalDriven()<<"\t"<<pterrLep;
         if(pT_e > minPtEl_3 && pT_e < maxPtEl_3 ){
-            pterrLep*=el_corr_3->GetBinContent(xbin,ybin);
-        } else {
-            pterrLep*=1.0;
+//         	std::cout<<"\t"<<pTerrOverPt_e<<"\t"<<fabs(eta_e)<<"\t"<<el_corr_3->GetBinContent(xbin,ybin);
+        	pterrLep*=el_corr_3->GetBinContent(xbin,ybin);
         }
+        else{
+        	pterrLep*=1.0;
+        }
+// 		std::cout<<"\t"<<pterrLep<<std::endl;
     }
     
 
@@ -317,79 +336,207 @@ double HelperFunction::pterr( reco::Candidate *c, bool isData, int year){
     int xbin = x_mupTaxis->FindBin(mu->pt());
     int ybin = y_muetaaxis->FindBin(fabs(mu->eta()));
     if(mu->pt()>minPtMu && mu->pt()<maxPtMu ){
-        pterrLep*=mu_corr->GetBinContent(xbin,ybin);
-    } else {
-        pterrLep*=1.0;
+            pterrLep*=mu_corr->GetBinContent(xbin,ybin);
+//             std::cout<<mu->pt()<<"\t"<<fabs(mu->eta())<<"\t"<<mu_corr->GetBinContent(xbin,ybin)<<std::endl;
+        } else {
+            pterrLep*=1.0;
+        }
+
+
+      }
+      else if ((pf = dynamic_cast<reco::PFCandidate *> (&(*c)) ) != 0)
+      { 
+        pterrLep=pterr(c, isData, year);
+      }
+
+      return pterrLep;
+
     }
 
-  }
-  else if ((pf = dynamic_cast<reco::PFCandidate *> (&(*c)) ) != 0)
-  { 
-    pterrLep=pterr(c, isData, year);
-  }
+double HelperFunction::pterr( TLorentzVector lepton, double lep_ptError, reco::Candidate *c, bool isData, int year){
 
-  return pterrLep;
+  reco::GsfElectron *gsf; reco::Muon *mu;
+  reco::PFCandidate *pf;
 
-}
+  pat::Muon *patmu;
 
-double HelperFunction::pterr( reco::Muon* mu, bool isData){
+  double pterrLep = 0.0;
 
-        double pterr = mu->muonBestTrack()->ptError();
+  if ((gsf = dynamic_cast<reco::GsfElectron *> (&(*c)) ) != 0)
+  {
 
-        return pterr;
-}
+    pterrLep=pterr(gsf, isData);
 
-double HelperFunction::pterr( reco::GsfElectron * elec, bool isData ){
+    double pT_e = gsf->pt();
+    double pTerrOverPt_e = (float)(pterrLep/pT_e);
+    double eta_e = gsf->eta();
+    
+    if (gsf->ecalDriven()) {
+    	int xbin = x_eletaaxis_1->FindBin(fabs(eta_e));
+    	int ybin = y_elpTErrOverpTaxis_1->FindBin(pTerrOverPt_e);
+//     	std::cout<<gsf->ecalDriven()<<"\t"<<pterrLep;
+    	if(pTerrOverPt_e > minPtErrOverPtEl_1 && pTerrOverPt_e < maxPtErrOverPtEl_1 ){
+//     		std::cout<<"\t"<<pTerrOverPt_e<<"\t"<<fabs(eta_e)<<"\t"<<el_corr_1->GetBinContent(xbin,ybin);
+    		pterrLep*=el_corr_1->GetBinContent(xbin,ybin);    		
+	    }
+	    else{
+    		pterrLep*=1.0;
+	    }
+// 	    std::cout<<"\t"<<pterrLep<<std::endl;
 
-        if(debug_) cout<<"reco:gsfelectron pt err"<<endl; 
-
-        double perr = elec->p();
-
-        if (elec->ecalDriven()){
-           perr = elec->p4Error(reco::GsfElectron::P4_COMBINATION);         
+/*        if (fabs(eta_e) < 1) {
+            if (pterrLep/pT_e < 0.03) { // hardcode 1
+                int xbin = x_elpTaxis_1->FindBin(pT_e);
+                int ybin = y_eletaaxis_1->FindBin(fabs(eta_e));
+                if(pT_e > minPtEl_1 && pT_e < maxPtEl_1 ){
+                    pterrLep*=el_corr_1->GetBinContent(xbin,ybin);
+                } else {
+                    pterrLep*=1.0;
+                }
+            } else {
+                if(year==2016)
+                    pterrLep*=1.007;
+                else if(year==2017)
+                    pterrLep*=1.004;
+                else if(year==2018)
+                    pterrLep*=1.003;
+                else{
+                   std::cout<<" --------------------  WRONG YEAR --------------- "<<std::endl; 
+                   return -1;
+                } 
+            } // hardcode 2        
+        } else if (fabs(eta_e) > 1 && fabs(eta_e) < 2.5) {
+            if (pterrLep/pT_e < 0.07) { // hardcode 3
+                int xbin = x_elpTaxis_2->FindBin(pT_e);
+                int ybin = y_eletaaxis_2->FindBin(fabs(eta_e));
+                if(pT_e > minPtEl_2 && pT_e < maxPtEl_2 ){
+                    pterrLep*=el_corr_2->GetBinContent(xbin,ybin);
+                } else {
+                    pterrLep*=1.0;
+                }
+            } else{
+                if(year==2016)                                                                                                                  
+                    pterrLep*=1.004;                                                                                                            
+                else if(year==2017)                                                                                                             
+                    pterrLep*=1.001;                                                                                                            
+                else if(year==2018)                                                                                                             
+                    pterrLep*=1.007;                                                                                                            
+                else{                                                                                                                           
+                    std::cout<<" --------------------  WRONG YEAR --------------- "<<std::endl; 
+                    return -1;
+                }  
+            } // hardcode 4
+        } // 1 < |eta| < 2.5  
+*/    
+    }
+    else{
+    	int xbin = x_elpTaxis_3->FindBin(pT_e);
+        int ybin = y_eletaaxis_3->FindBin(fabs(eta_e));
+        if(pT_e > minPtEl_3 && pT_e < maxPtEl_3 ){
+            pterrLep*=el_corr_3->GetBinContent(xbin,ybin);
         }
         else{
-
-                 double ecalEnergy = elec->correctedEcalEnergy() ;
-
-                 if(debug_)cout<<"ecalEnergy "<<ecalEnergy<<endl;
-                 double err2 = 0.0;
-                 if (elec->isEB()) {
-                        err2 += (5.24e-02*5.24e-02)/ecalEnergy;
-                        err2 += (2.01e-01*2.01e-01)/(ecalEnergy*ecalEnergy);
-                        err2 += 1.00e-02*1.00e-02;
-                 } else if (elec->isEE()) {
-                        err2 += (1.46e-01*1.46e-01)/ecalEnergy;
-                        err2 += (9.21e-01*9.21e-01)/(ecalEnergy*ecalEnergy);
-                        err2 += 1.94e-03*1.94e-03;
-                 }
-                 perr = ecalEnergy * sqrt(err2);
-
+            pterrLep*=1.0;
         }
-         
-        double pterr = perr*elec->pt()/elec->p();
+    }
+    
 
-        return pterr;
+  }
+  else if ((mu = dynamic_cast<reco::Muon *> (&(*c)) ) != 0)
+  {
+    pterrLep=lep_ptError;
+    if(debug_)cout<<"reco pt err is "<<pterrLep<<endl;
 
-}
+    if( (patmu = dynamic_cast<pat::Muon *> (&(*c)) )!=0){
+
+     if ( patmu->hasUserFloat("correctedPtError") == true ) {
+       if(debug_) cout<<"use userFloat for muon pt err"<<endl;
+       pterrLep = patmu->userFloat("correctedPtError");
+       if(debug_) cout<<"calib pt err is "<<pterrLep<<endl;
+     }
+ 
+    }
+
+    int xbin = x_mupTaxis->FindBin(lepton.Pt());
+    int ybin = y_muetaaxis->FindBin(fabs(lepton.Eta()));
+    if(lepton.Pt()>minPtMu && lepton.Pt()<maxPtMu ){
+            pterrLep*=mu_corr->GetBinContent(xbin,ybin);
+//             std::cout<<lepton.Pt()<<"\t"<<fabs(lepton.Eta())<<"\t"<<pterrLep<<"\t"<<mu_corr->GetBinContent(xbin,ybin)<<std::endl;
+        } else {
+            pterrLep*=1.0;
+        }
 
 
-double HelperFunction::pterr(TLorentzVector ph){
+      }
+  else if ((pf = dynamic_cast<reco::PFCandidate *> (&(*c)) ) != 0)
+      { 
+        pterrLep=pterr(c, isData, year);
+      }
 
-         if(debug_) cout<<"perr for pf photon"<<endl;
+      return pterrLep;
 
-         double perr = PFEnergyResolution().getEnergyResolutionEm(ph.E(), ph.Eta());
+    }
 
-         double pterr = perr*ph.Pt()/ph.P();
 
-         return pterr;
-}
+    double HelperFunction::pterr( reco::Muon* mu, bool isData){
 
-//
-// const member functions
-//
+            double pterr = mu->muonBestTrack()->ptError();
 
-//
-// static member functions
-//
+            return pterr;
+    }
+
+
+    double HelperFunction::pterr( reco::GsfElectron * elec, bool isData ){
+
+            if(debug_) cout<<"reco:gsfelectron pt err"<<endl; 
+
+            double perr = elec->p();
+
+            if (elec->ecalDriven()){
+               perr = elec->p4Error(reco::GsfElectron::P4_COMBINATION);         
+            }
+            else{
+
+                     double ecalEnergy = elec->correctedEcalEnergy() ;
+
+                     if(debug_)cout<<"ecalEnergy "<<ecalEnergy<<endl;
+                     double err2 = 0.0;
+                     if (elec->isEB()) {
+                            err2 += (5.24e-02*5.24e-02)/ecalEnergy;
+                            err2 += (2.01e-01*2.01e-01)/(ecalEnergy*ecalEnergy);
+                            err2 += 1.00e-02*1.00e-02;
+                     } else if (elec->isEE()) {
+                            err2 += (1.46e-01*1.46e-01)/ecalEnergy;
+                            err2 += (9.21e-01*9.21e-01)/(ecalEnergy*ecalEnergy);
+                            err2 += 1.94e-03*1.94e-03;
+                     }
+                     perr = ecalEnergy * sqrt(err2);
+
+            }
+             
+            double pterr = perr*elec->pt()/elec->p();
+
+            return pterr;
+
+    }
+
+
+    double HelperFunction::pterr(TLorentzVector ph){
+
+             if(debug_) cout<<"perr for pf photon"<<endl;
+
+             double perr = PFEnergyResolution().getEnergyResolutionEm(ph.E(), ph.Eta());
+
+             double pterr = perr*ph.Pt()/ph.P();
+
+             return pterr;
+    }
+
+    //
+    // const member functions
+    //
+
+    //
+    // static member functions
+    //
 #endif

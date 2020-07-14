@@ -113,7 +113,7 @@ void KinZfitter::Setup(std::vector< reco::Candidate* > selectedLeptons, std::map
 }
 
 /// SETUP FOR USING LEPTON REFITTED
-void KinZfitter::Setup(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
+void KinZfitter::Setup(std::vector<TLorentzVector> VtxLep, std::vector<double> lep_pTError, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
     // reset everything for each event
     idsZ1_.clear(); idsZ2_.clear();      
     idsFsrZ1_.clear(); idsFsrZ2_.clear();
@@ -124,7 +124,7 @@ void KinZfitter::Setup(std::vector<TLorentzVector> VtxLep, std::vector< reco::Ca
     pTerrsZ1_.clear(); pTerrsZ2_.clear(); pTerrsZ1ph_.clear(); pTerrsZ2ph_.clear();
     pTerrsZ1REFIT_.clear(); pTerrsZ2REFIT_.clear(); pTerrsZ1phREFIT_.clear(); pTerrsZ2phREFIT_.clear();
 
-    initZs(VtxLep, selectedLeptons, selectedFsrPhotons, year);
+    initZs(VtxLep, lep_pTError, selectedLeptons, selectedFsrPhotons, year);
     
     if(debug_) cout<<"list ids"<<endl;
     if(debug_) cout<<"IDs[0] "<<idsZ1_[0]<<" IDs[1] "<<idsZ1_[1]<<" IDs[2] "<<idsZ2_[0]<<" IDs[3] "<<idsZ2_[1]<<endl;
@@ -259,11 +259,12 @@ void KinZfitter::initZs(std::vector< reco::Candidate* > selectedLeptons, std::ma
 }
 
 /// initZs FOR USING LEPTON REFITTED
-void KinZfitter::initZs(std::vector<TLorentzVector> VtxLep, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
+void KinZfitter::initZs(std::vector<TLorentzVector> VtxLep, std::vector<double> lep_pTError, std::vector< reco::Candidate* > selectedLeptons, std::map<unsigned int, TLorentzVector> selectedFsrPhotons, int year){
     
     if(debug_) cout<<"init leptons"<<endl;
     
-    if(selectedLeptons.size() != VtxLep.size()) std::cout<<" ----------- LEPTON REFITTED DIFFERENT FROM SELECTED ONES"<<std::endl;
+    if(selectedLeptons.size() != VtxLep.size())
+    	std::cout<<" ----------- LEPTON REFITTED DIFFERENT FROM SELECTED ONES"<<std::endl;
 
     for(unsigned int il = 0; il<selectedLeptons.size(); il++)
     {
@@ -271,7 +272,7 @@ void KinZfitter::initZs(std::vector<TLorentzVector> VtxLep, std::vector< reco::C
 //         TLorentzVector p4;
 
         reco::Candidate * c = selectedLeptons[il];              
-        pTerr = helperFunc_->pterr(c ,  isData_, year);
+        pTerr = helperFunc_->pterr(VtxLep.at(il), lep_pTError.at(il), c, isData_, year);
 //         p4.SetPxPyPzE(c->px(),c->py(),c->pz(),c->energy());  
         int pdgId = c->pdgId();
 
