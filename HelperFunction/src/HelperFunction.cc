@@ -85,7 +85,12 @@ HelperFunction::HelperFunction(int year, bool isData)
             //directory_name = "KinZfitter/HelperFunction/hists/FullRunII/Base_Production_10_2_18/";
         else
             directory_name = "KinZfitter/HelperFunction/hists/FullRunII/Data/";
-        directory_name = Form("%s%d/", directory_name.Data(), year);
+
+        if(year == 20165 || year == 20160)
+	        directory_name = Form("%s%d/", directory_name.Data(), 2016);
+	    else
+	        directory_name = Form("%s%d/", directory_name.Data(), year);
+
         /*
         if(year == 2016)
             directory_name = "KinZfitter/HelperFunction/hists/FullRunII/madgraph/2016/";
