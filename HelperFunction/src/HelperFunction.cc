@@ -452,15 +452,15 @@ double HelperFunction::pterr( TLorentzVector lepton, double lep_ptError, reco::C
     pterrLep=lep_ptError;
     if(debug_)cout<<"reco pt err is "<<pterrLep<<endl;
 
-    if( (patmu = dynamic_cast<pat::Muon *> (&(*c)) )!=0){
+//    if( (patmu = dynamic_cast<pat::Muon *> (&(*c)) )!=0){
 
-     if ( patmu->hasUserFloat("correctedPtError") == true ) {
-       if(debug_) cout<<"use userFloat for muon pt err"<<endl;
-       pterrLep = patmu->userFloat("correctedPtError");
-       if(debug_) cout<<"calib pt err is "<<pterrLep<<endl;
-     }
+//     if ( patmu->hasUserFloat("correctedPtError") == true ) {
+//       if(debug_) cout<<"use userFloat for muon pt err"<<endl;
+//       pterrLep = patmu->userFloat("correctedPtError");
+//       if(debug_) cout<<"calib pt err is "<<pterrLep<<endl;
+//     }
  
-    }
+//    }
 
     int xbin = x_mupTaxis->FindBin(lepton.Pt());
     int ybin = y_muetaaxis->FindBin(fabs(lepton.Eta()));
